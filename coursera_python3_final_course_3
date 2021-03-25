@@ -1,0 +1,41 @@
+
+# some invocations that we use in the automated tests; uncomment these if you are getting errors and want better error messages
+# get_sorted_recommendations(["Bridesmaids", "Sherlock Holmes"])
+# some invocations that we use in the automated tests; uncomment these if you are getting errors and want better error messages
+# get_movie_rating(get_movie_data("Deadpool 2"))
+
+import requests_with_caching,json
+
+def get_movies_from_tastedive(q):
+    params2 = {'limit':5,'type':'movies','q':q}
+    res = requests_with_caching.get('https://tastedive.com/api/similar',params=params2)
+    data=json.loads(res.text)
+    return(data)
+
+def get_movie_data(name):
+    params = {'t':name ,'r':'json'}
+    req = requests_with_caching.get('http://www.omdbapi.com/',params=params)
+    data = json.loads(req.text)
+    return data
+
+def get_movie_rating(data):
+    #{'Source': 'Rotten Tomatoes', 'Value': '97%'}
+    ratings = (data['Ratings'])
+    val = [rating['Value'] for rating in ratings if rating['Source']=='Rotten Tomatoes']
+    if val: 
+        return int( val[0][:-1]) 
+    return 0
+
+def get_sorted_recommendations(movie_titles):
+    movies = []
+    for movie_title in movie_titles:
+        movie_list = get_movies_from_tastedive(movie_title)
+        temp_movie_list=[]
+        for movie in movie_list['Similar']['Results']:
+            temp_movie = (movie['Name'],get_movie_rating(get_movie_data(movie['Name'])))
+            temp_movie_list.append(temp_movie)
+        movies=movies+temp_movie_list
+    sorted_list =  sorted(movies, key=lambda k: (-(k[1])))
+    return [(a) for a, b in sorted_list]
+get_sorted_recommendations(["Bridesmaids", "Sherlock Holmes"])
+#get_movie_rating(get_movie_data("Deadpool 2"))
